@@ -1,21 +1,37 @@
 #!/usr/bin/env python3
 """
-Test the Cache class
+Module cache
+Defines a Cache class for storing data in Redis
 """
 
-from cache import Cache
+import redis
+import uuid
+from typing import Union
 
-cache = Cache()
 
-# Test storing different data types
-key1 = cache.store("Hello Redis!")
-key2 = cache.store(123)
-key3 = cache.store(45.67)
-key4 = cache.store(b"bytes data")
+class Cache:
+    """
+    Cache class that provides methods to store data in Redis.
+    """
 
-print("Stored keys:")
-print(key1)
-print(key2)
-print(key3)
-print(key4)
+    def __init__(self):
+        """
+        Initialize a Redis client and flush the database.
+        """
+        self._redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        self._redis.flushdb()
+
+    def store(self, data: Union[str, bytes, int, float]) -> str:
+        """
+        Store the given data in Redis with a random UUID key.
+
+        Args:
+            data (Union[str, bytes, int, float]): The data to store.
+
+        Returns:
+            str: The key under which the data is stored.
+        """
+        key = str(uuid.uuid4())
+        self._redis.set(key, data)
+        return key
 
