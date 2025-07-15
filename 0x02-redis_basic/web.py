@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Expiring web cache and URL access tracker
+This module implements a get_page function that fetches HTML content
+of a URL, caches it for 10 seconds, and tracks how many times
+each URL is accessed in Redis.
+
+Author:Linda musyoki
 """
 import redis
 import requests
@@ -51,6 +55,38 @@ def cache_page(func: Callable) -> Callable:
 def get_page(url: str) -> str:
     """
     Fetch the HTML content of a URL.
+
+    - Tracks how many times the URL was accessed (key: count:{url})
+    - Caches the result in Redis for 10 seconds (key: cache:{url})
+
+    Args:
+        url (str): The URL to fetch
+
+    Returns:
+        str: HTML content of the URL
     """
+    count_key = f"count:{url}"
+    cache_key = f"cache:{url}"
+
+    # Increment access count
+    r.incr(count_key)
+
+    # Check if cached HTML exists
+    cached_html = r.get(cache_key)
+    if cached_html:
+        return cached_html.decode('utf-8')
+
+    # Fetch from the web
     response = requests.get(url)
-    return response.text
+    html = response.text
+
+    # Cache the result with 10-second expiration
+    r.setex(cache_key, 10, html)
+
+    return html
+
+
+
+
+
+ 
