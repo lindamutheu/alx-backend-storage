@@ -3,8 +3,9 @@
 exercise.py
 This module contains the Cache class with Redis storage and a replay function
 for tracking method call history.
-"""
 
+Author:linda musyoki
+"""
 import redis
 import uuid
 from typing import Union, Callable, Optional
@@ -34,10 +35,8 @@ def call_history(method: Callable) -> Callable:
         input_key = method.__qualname__ + ":inputs"
         output_key = method.__qualname__ + ":outputs"
 
-        # Store input arguments as string (ignores kwargs)
         self._redis.rpush(input_key, str(args))
 
-        # Call the original method and store output
         result = method(self, *args, **kwargs)
         self._redis.rpush(output_key, str(result))
 
@@ -46,8 +45,11 @@ def call_history(method: Callable) -> Callable:
 
 
 class Cache:
+    """
+    Cache class for storing data in Redis with history tracking
+    """
     def __init__(self) -> None:
-        """Initialize Redis client and flush the DB."""
+        """Initialize Redis client and flush database"""
         self._redis = redis.Redis()
         self._redis.flushdb()
 
@@ -56,15 +58,22 @@ class Cache:
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Store data in Redis with a random UUID key.
-        Returns the key.
+
+        Args:
+            data (str, bytes, int, float): The data to store.
+
+        Returns:
+            str: The key under which data was stored.
         """
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
 
     def get(
-            self, key: str, fn: Optional[Callable] = None
-            ) -> Union[str, bytes, int, float, None]:
+        self,
+        key: str,
+        fn: Optional[Callable] = None
+    ) -> Union[str, bytes, int, float, None]:
         """
         Get data from Redis and optionally apply a conversion function.
         Returns None if key does not exist.
@@ -96,11 +105,9 @@ def replay(method: Callable) -> None:
     inputs_key = f"{method_name}:inputs"
     outputs_key = f"{method_name}:outputs"
 
-    # Fetch all inputs and outputs
     inputs = redis_client.lrange(inputs_key, 0, -1)
     outputs = redis_client.lrange(outputs_key, 0, -1)
 
-    # Number of calls = length of inputs (or outputs)
     call_count = len(inputs)
 
     print(f"{method_name} was called {call_count} times:")
@@ -108,8 +115,6 @@ def replay(method: Callable) -> None:
     for input_bytes, output_bytes in zip(inputs, outputs):
         input_str = input_bytes.decode('utf-8')
         output_str = output_bytes.decode('utf-8')
-
-
-print(
-    f"{method_name}(*{input_str}) -> {output_str}"
-)
+        print(
+            f"{method_name}(*{input_str}) -> {output_str}"
+        )
