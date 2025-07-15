@@ -4,7 +4,7 @@ This module implements a get_page function that fetches HTML content
 of a URL, caches it for 10 seconds, and tracks how many times
 each URL is accessed in Redis.
 
-Author:Linda musyoki
+Author: Linda Musyoki
 """
 import redis
 import requests
@@ -16,19 +16,6 @@ from typing import Callable
 r = redis.Redis()
 
 
-def count_url_access(func: Callable) -> Callable:
-    """
-    Decorator to increment the count of URL accesses.
-    Stores count in Redis with key: count:{url}
-    """
-    @wraps(func)
-    def wrapper(url: str) -> str:
-        count_key = f"count:{url}"
-        r.incr(count_key)
-        return func(url)
-    return wrapper
-
-
 def cache_page(func: Callable) -> Callable:
     """
     Decorator to cache HTML content for 10 seconds.
@@ -37,20 +24,21 @@ def cache_page(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(url: str) -> str:
         cache_key = f"cache:{url}"
+        count_key = f"count:{url}"
 
         # Check if cached result exists
         cached = r.get(cache_key)
         if cached:
             return cached.decode('utf-8')
 
-        # Call the original function and cache result
+        # Cache miss: fetch, increment count, cache result
         html = func(url)
+        r.incr(count_key)  # Increment count only on fetch
         r.setex(cache_key, 10, html)  # Cache for 10 seconds
         return html
     return wrapper
 
 
-@count_url_access
 @cache_page
 def get_page(url: str) -> str:
     """
@@ -58,4 +46,3 @@ def get_page(url: str) -> str:
     """
     response = requests.get(url)
     return response.text
-
