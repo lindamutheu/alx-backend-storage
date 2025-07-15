@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+"""
+exercise.py
+This module contains the Cache class with Redis storage and a replay function
+for tracking method call history.
+"""
+
 import redis
 import uuid
 from typing import Union, Callable, Optional
@@ -55,7 +62,9 @@ class Cache:
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable] = None) -> Union[str, bytes, int, float, None]:
+    def get(
+            self, key: str, fn: Optional[Callable] = None
+            ) -> Union[str, bytes, int, float, None]:
         """
         Get data from Redis and optionally apply a conversion function.
         Returns None if key does not exist.
@@ -74,6 +83,7 @@ class Cache:
     def get_int(self, key: str) -> Optional[int]:
         """Retrieve data and convert bytes to int."""
         return self.get(key, fn=int)
+
 
 def replay(method: Callable) -> None:
     """
@@ -98,4 +108,8 @@ def replay(method: Callable) -> None:
     for input_bytes, output_bytes in zip(inputs, outputs):
         input_str = input_bytes.decode('utf-8')
         output_str = output_bytes.decode('utf-8')
-        print(f"{method_name}(*{input_str}) -> {output_str}")
+
+
+print(
+    f"{method_name}(*{input_str}) -> {output_str}"
+)
