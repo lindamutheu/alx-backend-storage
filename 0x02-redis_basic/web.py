@@ -55,6 +55,13 @@ def cache_page(func: Callable) -> Callable:
 def get_page(url: str) -> str:
     """
     Fetch the HTML content of a URL.
+    """
+    response = requests.get(url)
+    return response.text
+
+def get_page(url: str) -> str:
+    """
+    Fetch the HTML content of a URL.
 
     - Tracks how many times the URL was accessed (key: count:{url})
     - Caches the result in Redis for 10 seconds (key: cache:{url})
